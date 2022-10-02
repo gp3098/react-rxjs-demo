@@ -1,7 +1,7 @@
 import './App.css';
 import { useRef } from 'react';
 import { useEffect } from 'react';
-import { fromEvent, interval, switchMap, switchMapTo, takeUntil } from 'rxjs';
+import { fromEvent, interval, map, scan, startWith, switchMap, switchMapTo, takeUntil } from 'rxjs';
 //针对这个公众号的文章进行学习
 //https://mp.weixin.qq.com/s/5sXPioGOZ73narerYZF9Wg
 
@@ -14,9 +14,16 @@ function App() {
     const perSecond$ = interval(1000);
 
     const intervalCanBeStopped$ = perSecond$.pipe(takeUntil(stopBtnClick$));
-    const subscription = startBtnClick$.pipe(switchMap(() => intervalCanBeStopped$)).subscribe((v) => {
-      console.log(v);
-    });
+    const subscription = startBtnClick$
+      .pipe(
+        switchMap(() => intervalCanBeStopped$),
+        startWith({ count: 0 }),
+        scan((acc, curr) => ({ count: acc.count + 1 })),
+        map((state) => state.count)
+      )
+      .subscribe((v) => {
+        console.log(v);
+      });
 
     return () => subscription.unsubscribe();
   });
