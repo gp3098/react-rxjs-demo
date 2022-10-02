@@ -1,24 +1,31 @@
 import './App.css';
 import { useRef } from 'react';
 import { useEffect } from 'react';
-import { fromEvent } from 'rxjs';
+import { fromEvent, interval, switchMap, switchMapTo, takeUntil } from 'rxjs';
 //针对这个公众号的文章进行学习
 //https://mp.weixin.qq.com/s/5sXPioGOZ73narerYZF9Wg
 
 function App() {
-  const btnRef = useRef(null);
+  const startBtnRef = useRef(null);
+  const stopBtnRef = useRef(null);
   useEffect(() => {
-    const btnClick$ = fromEvent(btnRef.current, 'click');
-    const subscription = btnClick$.subscribe((e) => {
-      console.log(e);
+    const stopBtnClick$ = fromEvent(stopBtnRef.current, 'click');
+    const startBtnClick$ = fromEvent(startBtnRef.current, 'click');
+    const perSecond$ = interval(1000);
+
+    const intervalCanBeStopped$ = perSecond$.pipe(takeUntil(stopBtnClick$));
+    const subscription = startBtnClick$.pipe(switchMap(() => intervalCanBeStopped$)).subscribe((v) => {
+      console.log(v);
     });
+
     return () => subscription.unsubscribe();
   });
   return (
     <div className="App">
       <h1>Vite + React</h1>
       <div className="card">
-        <button ref={btnRef}>Click me</button>
+        <button ref={startBtnRef}>start button</button>
+        <button ref={stopBtnRef}>stop button</button>
       </div>
     </div>
   );
